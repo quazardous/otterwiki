@@ -416,7 +416,14 @@ babel = Babel(app, locale_selector=get_locale)
 
 
 def content_language(pagepath=None):
-    """The language the pages are written in: SITE_LANG."""
+    """
+    The language a page is written in: what a plugin says (page_language),
+    else SITE_LANG.
+    """
+    if pagepath:
+        language = plugin_manager.hook.page_language(pagepath=pagepath)
+        if language:
+            return language
     return app.config.get("SITE_LANG") or None
 
 
@@ -595,7 +602,25 @@ def plugin_sidebar_right_inject(page=None):
     return ''.join(result for result in results if result)
 
 
+def plugin_page_menu_entries(pagepath):
+    """Template function: the entries the plugins add to the page menu."""
+    entries = []
+    for result in plugin_manager.hook.page_menu_entries(pagepath=pagepath):
+        entries.extend(result or [])
+    return entries
+
+
+def plugin_admin_menu_entries():
+    """Template function: the entries the plugins add to the admin menu."""
+    entries = []
+    for result in plugin_manager.hook.admin_menu_entries():
+        entries.extend(result or [])
+    return entries
+
+
 app.jinja_env.globals.update(
+    plugin_page_menu_entries=plugin_page_menu_entries,
+    plugin_admin_menu_entries=plugin_admin_menu_entries,
     load_custom_html=load_custom_html,
     plugin_html_head_inject=plugin_html_head_inject,
     plugin_html_body_inject=plugin_html_body_inject,
